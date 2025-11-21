@@ -87,13 +87,11 @@ internal static class SpriteTemplate {
 
     internal static void RegisterTemplate(string template) {
         _template = Handlebars.Compile(template);
+        
+        SpriteCache.Reset();
 
         for (var i = 0; i < Party.Pokemon.Length; i++) {
-            if (Party.Pokemon[i] == null) {
-                continue;
-            }
-            
-            Console.WriteLine(Handle(Party.Pokemon[i]!));
+            Party.Pokemon[i].Reset();
         }
     }
 

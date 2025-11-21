@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net;
 using System.Text;
 using NetCoreServer;
@@ -8,8 +9,6 @@ namespace NimbusFox.Pokelink.Theme;
 
 public class Client : TcpClient {
     private static readonly byte[] EomArray = "<EOM>"u8.ToArray();
-
-    private static readonly byte[] Nullarray = "\0\0\0\0"u8.ToArray();
 
     /// <inheritdoc />
     public Client(string address, int port) : base(address, port) { }
@@ -29,30 +28,32 @@ public class Client : TcpClient {
         while (eomIndex != -1) {
             var data = buffer[..eomIndex];
 
-            var eop = data.IndexOf(Nullarray) + 1;
-
             Base? message;
 
             try {
-                message = Base.Parser.ParseFrom(eop == 0 ? data : data[..eop]);
-            } catch {
-                // ignore
+                message = Base.Parser.ParseFrom(data);
+            } catch (Exception ex) {
+                if (Debugger.IsAttached) {
+                    Console.Error.WriteLine(ex);
+                }
+
                 if (eomIndex + 5 >= buffer.Length) {
                     break;
                 }
-                
+
                 buffer = buffer[(eomIndex + 5)..];
                 eomIndex = buffer.IndexOf(EomArray);
+
                 continue;
             }
 
             if (message != null) {
                 switch (message.Channel) {
                     case "client:party:updated":
-                        Party.Update(V2_Party.Parser.ParseFrom(eop == 0 ? data : data[..eop]));
+                        Party.Update(V2_Party.Parser.ParseFrom(data));
                         break;
                     case "client:settings:updated":
-                        var settings = Settings.Parser.ParseFrom(eop == 0 ? data : data[..eop]);
+                        var settings = Settings.Parser.ParseFrom(data);
                         if (settings.Data.HasSpriteTemplate) {
                             SpriteTemplate.RegisterTemplate(settings.Data.SpriteTemplate);
                         }
