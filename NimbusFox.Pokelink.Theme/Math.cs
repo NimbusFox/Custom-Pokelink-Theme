@@ -7,6 +7,10 @@ internal static class Math {
     internal static float GetPercentage(float value, float max) {
         return value / max * 100;
     }
+
+    internal static float GetPercentageOf(float value, float percent) {
+        return value * percent / 100;
+    }
     
     internal struct Vector2I(int x = 0, int y = 0) {
         public int X = x;

@@ -1,4 +1,3 @@
-using System.Numerics;
 using Pokelink.Core.Proto.V2;
 using Raylib_cs;
 using V2_Party = Pokelink.Core.Proto.V2.Party;
