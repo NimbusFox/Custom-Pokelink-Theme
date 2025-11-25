@@ -15,11 +15,11 @@ client.ConnectAsync();
 
 Raylib.SetConfigFlags(ConfigFlags.TransparentWindow | ConfigFlags.VSyncHint);
 
-Raylib.InitWindow(1280, 720, "Custom Pokelink Theme");
+Raylib.InitWindow(715, 660, "Custom Pokelink Theme");
 
 const int nameFontSize = 75;
 
-const int gillFontSize = 50;
+const int gillFontSize = 45;
 
 var font = Raylib.LoadFontEx("./Pokemon Solid.ttf", nameFontSize, null, 0);
 
@@ -30,6 +30,8 @@ var selected = 0;
 var wait = 5f;
 
 while (!Raylib.WindowShouldClose()) {
+    var fpsX = Raylib.MeasureText($"{Raylib.GetFPS()} FPS", 20);
+    
     if (client is { IsConnected: false, IsConnecting: false }) {
         client.ConnectAsync();
     }
@@ -58,7 +60,8 @@ while (!Raylib.WindowShouldClose()) {
 
     var index = 0;
 
-    const int startX = 355;
+    const int startX = 115;
+    const int middleX = startX + 250;
 
     for (byte i = 0; i < Party.Pokemon.Length; i++) {
         try {
@@ -83,10 +86,12 @@ while (!Raylib.WindowShouldClose()) {
             slot.RenderPartySprite(
                 new Rectangle(new Vector2(55 - (pSpriteSize.X / 2), (50 - (pSpriteSize.Y / 2)) + partyOffset),
                     pSpriteSize), Color.White);
+                
+            slot.RenderGenderSprite(new Rectangle(5 + 70, partyOffset + 25, 20, 20), Color.White);
 
             if (index == selected) {
                 Drawing.DrawRectangleRoundedGradient(new Rectangle(115, 5, 500, 650), 0f, 0.5f, 20, type1Color,
-                    type2Color, type1Color, type2Color);
+                    type2Color, type2Color, type1Color);
 
                 var name = slot.Pokemon.HasNickname
                     ? slot.Pokemon.Nickname
@@ -94,7 +99,7 @@ while (!Raylib.WindowShouldClose()) {
 
                 var nameSize = Raylib.MeasureTextEx(font, name, nameFontSize, 1f);
 
-                Raylib.DrawTextEx(font, name, new Vector2(startX - nameSize.X / 2, 15), nameFontSize, 1f, Color.Black);
+                Raylib.DrawTextEx(font, name, new Vector2(middleX - nameSize.X / 2, 15), nameFontSize, 1f, Color.Black);
 
                 var spriteSize = slot.GetSprite()!.Value.GetRatioSizeH(125);
 
@@ -104,20 +109,22 @@ while (!Raylib.WindowShouldClose()) {
                     heightOffset = 0;
                 }
 
-                slot.RenderSprite(new Rectangle(startX - spriteSize.X / 2, nameSize.Y + heightOffset, spriteSize),
+                slot.RenderSprite(new Rectangle(middleX - spriteSize.X / 2, nameSize.Y + heightOffset, spriteSize),
                     Color.White);
 
-                var levelText = $"Level: {slot.Pokemon.Level}";
+                var levelText = $"Lv. {slot.Pokemon.Level}";
 
                 var levelSize = Raylib.MeasureTextEx(gillSansFont, levelText, gillFontSize, 1f);
 
+                var levelOffset = levelSize.X / 2;
+
                 Raylib.DrawTextEx(gillSansFont, levelText,
-                    new Vector2(startX - levelSize.X / 2, nameSize.Y + 100 + levelSize.Y), gillFontSize, 1f,
+                    new Vector2((middleX / 2f - levelOffset) + 5, nameSize.Y + 60 - (levelSize.Y / 2)), gillFontSize, 1f,
                     Color.Black);
             }
 
             partyOffset += 110;
-        } catch (Exception ex) {
+        } catch (Exception ex) when (!Debugger.IsAttached) {
             // ignore
             if (Debugger.IsAttached) {
                 Console.Error.WriteLine($"{ex}");
@@ -129,7 +136,7 @@ while (!Raylib.WindowShouldClose()) {
 
     Party.ReleaseLock();
 
-    Raylib.DrawFPS(10, 10);
+    Raylib.DrawFPS((Raylib.GetScreenWidth()) - 10 - fpsX, 10);
 
     Raylib.EndDrawing();
     

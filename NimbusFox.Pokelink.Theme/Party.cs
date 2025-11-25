@@ -9,6 +9,7 @@ internal class Slot {
     internal Pokemon? Pokemon = null;
     private PokeSprite? _sprite = null;
     private PokeSprite? _partySprite = null;
+    private PokeSprite? _genderSprite = null;
 
     public void Update(bool isVisible) {
         if (Pokemon == null) {
@@ -23,31 +24,33 @@ internal class Slot {
         _sprite ??= SpriteCache.FetchSprite(Pokemon);
         _partySprite ??= SpriteCache.FetchPartySprite(Pokemon);
 
+        _genderSprite = Pokemon.Gender switch {
+            Gender.Male => SpriteCache.MaleIcon,
+            Gender.Female => SpriteCache.FemaleIcon,
+            Gender.Less => SpriteCache.GenderlessIcon,
+            _ => throw new ArgumentOutOfRangeException()
+        };
+
+        var healthPercentage = Math.GetPercentage(Pokemon.Hp.Current, Pokemon.Hp.Max);
+
         if (isVisible) {
-            _sprite?.Update();
+            _sprite?.Update(healthPercentage);
+            _genderSprite?.Update(healthPercentage);
         }
-        _partySprite?.Update();
+        _partySprite?.Update(healthPercentage);
     }
 
     public void Update(Pokemon? pokemon) {
         if (pokemon == null && Pokemon != null) {
             Reset();
-            Pokemon = null;
-            return;
         }
 
         if (pokemon != null && Pokemon == null) {
             Reset();
-            Pokemon = pokemon;
-            return;
         }
 
-        if (pokemon == null || Pokemon == null) {
-            return;
-        }
-
-        if (Pokemon.Species != pokemon.Species || Pokemon.Form != pokemon.Form || Pokemon.IsShiny != pokemon.IsShiny ||
-            Pokemon.Gender != pokemon.Gender) {
+        if (Pokemon?.Species != pokemon?.Species || Pokemon?.Form != pokemon?.Form || Pokemon?.IsShiny != pokemon?.IsShiny ||
+            Pokemon?.Gender != pokemon?.Gender) {
             Reset();
         }
 
@@ -57,6 +60,14 @@ internal class Slot {
     public void Reset() {
         _sprite = null;
         _partySprite = null;
+    }
+
+    public Texture2D? GetGenderSprite() {
+        if (_genderSprite?.Texture == null) {
+            _genderSprite?.LoadTexture();
+        }
+        
+        return _genderSprite?.Texture;
     }
 
     public Texture2D? GetPartySprite() {
@@ -109,6 +120,18 @@ internal class Slot {
         _sprite?.UseCycle = 3;
         _partySprite?.UseCycle = 3;
         _partySprite?.Render(x, y, tint);
+    }
+
+    public void RenderGenderSprite(Math.Vector2I offset) {
+        _genderSprite?.Render(offset.X, offset.Y, Color.White);
+    }
+
+    public void RenderGenderSprite(Rectangle target, Color tint) {
+        _genderSprite?.Render(target, tint);
+    }
+
+    public void RenderGenderSprite(int x, int y, Color tint) {
+        _genderSprite?.Render(x, y, tint);
     }
 }
 

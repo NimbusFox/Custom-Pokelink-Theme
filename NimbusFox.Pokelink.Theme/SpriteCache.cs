@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Net;
+using System.Reflection;
 using Pokelink.Core.Proto.V2;
 using Raylib_cs;
 
@@ -14,11 +15,26 @@ internal static class SpriteCache {
 
     private static readonly HttpClient HttpClient;
 
+    internal static readonly PokeSprite MaleIcon;
+
+    internal static readonly PokeSprite FemaleIcon;
+
+    internal static readonly PokeSprite GenderlessIcon;
+
     static SpriteCache() {
         ICF = new FileStream("./sprite.cache", FileMode.OpenOrCreate);
         ImageCache = new ZipArchive(ICF, ZipArchiveMode.Update, true);
 
         HttpClient = new HttpClient();
+
+        MaleIcon = new PokeSprite(
+            Assembly.GetAssembly(typeof(SpriteCache))!.GetManifestResourceStream("Theme.Sprite.Male")!, "png");
+
+        FemaleIcon = new PokeSprite(
+            Assembly.GetAssembly(typeof(SpriteCache))!.GetManifestResourceStream("Theme.Sprite.Female")!, "png");
+
+        GenderlessIcon = new PokeSprite(
+            Assembly.GetAssembly(typeof(SpriteCache))!.GetManifestResourceStream("Theme.Sprite.Genderless")!, "png");
     }
 
     internal static void Dispose() {
@@ -46,8 +62,8 @@ internal static class SpriteCache {
         var response = HttpClient.Send(new HttpRequestMessage(HttpMethod.Get, url),
             HttpCompletionOption.ResponseHeadersRead);
 
-        if (Sprites.TryGetValue(url, out var texture)) {
-            return texture;
+        if (Sprites.TryGetValue(url, out var sprite)) {
+            return sprite;
         }
 
         var path = url.Replace("https://", "").Replace("http://", "");
@@ -93,10 +109,12 @@ internal static class SpriteCache {
             throw new Exception("We shouldn't get here. But something very wrong will need of happened to get here!");
         }
 
-        if (url.EndsWith(".gif", StringComparison.CurrentCultureIgnoreCase)) {
+        var extensions = SixLabors.ImageSharp.Image.DetectFormat(stream).FileExtensions.ToArray();
+
+        if (extensions.Contains("gif")) {
             Sprites[url] = new PokeAnimatedSprite(stream);
         } else {
-            Sprites[url] = new PokeSprite(stream);
+            Sprites[url] = new PokeSprite(stream, extensions[0]);
         }
         
         stream.Close();
@@ -120,10 +138,12 @@ internal static class SpriteCache {
             throw new Exception("We shouldn't get here. But something very wrong will need of happened to get here!");
         }
 
-        if (url.EndsWith(".gif", StringComparison.CurrentCultureIgnoreCase)) {
+        var extensions = SixLabors.ImageSharp.Image.DetectFormat(stream).FileExtensions.ToArray();
+
+        if (extensions.Contains("gif")) {
             Sprites[url] = new PokeAnimatedSprite(stream);
         } else {
-            Sprites[url] = new PokeSprite(stream);
+            Sprites[url] = new PokeSprite(stream, extensions[0]);
         }
 
         return Sprites[url];

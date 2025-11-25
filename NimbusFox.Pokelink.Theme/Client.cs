@@ -28,7 +28,7 @@ public class Client : TcpClient {
         while (eomIndex != -1) {
             var data = buffer[..eomIndex];
 
-            Base? message;
+            Base? message = null;
 
             try {
                 message = Base.Parser.ParseFrom(data);
@@ -37,20 +37,23 @@ public class Client : TcpClient {
                     Console.Error.WriteLine(ex);
                 }
 
-                if (eomIndex + 5 >= buffer.Length) {
-                    break;
-                }
-
-                buffer = buffer[(eomIndex + 5)..];
-                eomIndex = buffer.IndexOf(EomArray);
-
-                continue;
+                message = null;
             }
 
             if (message != null) {
                 switch (message.Channel) {
                     case "client:party:updated":
-                        Party.Update(V2_Party.Parser.ParseFrom(data));
+                        V2_Party? party = null;
+                        try {
+                            party = V2_Party.Parser.ParseFrom(data);
+                        } catch {
+                            // ignore
+                        }
+
+                        if (party != null) {
+                            Party.Update(party);
+                        }
+
                         break;
                     case "client:settings:updated":
                         var settings = Settings.Parser.ParseFrom(data);

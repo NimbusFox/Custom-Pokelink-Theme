@@ -21,8 +21,11 @@ public class PokeSprite : IDisposable {
 
     public Texture2D? Texture { get; protected set; }
 
-    public PokeSprite(Stream stream) {
+    protected readonly string Extension;
+
+    public PokeSprite(Stream stream, string extension) {
         stream.CopyTo(Data);
+        Extension = extension;
     }
 
     public virtual void LoadTexture() {
@@ -69,10 +72,10 @@ public class PokeSprite : IDisposable {
 
     public virtual void LoadImage() {
         Data.Seek(0, SeekOrigin.Begin);
-        Image ??= Raylib.LoadImageFromMemory(".png", Data.ToArray());
+        Image ??= Raylib.LoadImageFromMemory($".{Extension}", Data.ToArray());
     }
 
-    public virtual void Update() { }
+    public virtual void Update(float speed) { }
 
     public override bool Equals(object? obj) {
         if (obj is PokeSprite ps) {
@@ -104,7 +107,7 @@ public class PokeAnimatedSprite : PokeSprite {
     private float _sinceLastFrame;
     private byte[]? _pixels;
 
-    public PokeAnimatedSprite(Stream stream) : base(stream) { }
+    public PokeAnimatedSprite(Stream stream) : base(stream, "gif") { }
 
     public override void UnloadImage() {
         _info?.Dispose();
@@ -155,14 +158,24 @@ public class PokeAnimatedSprite : PokeSprite {
         Texture = texture;
     }
 
-    public override void Update() {
+    public override void Update(float speed) {
         if (Texture == null) {
             LoadTexture();
         }
 
+        if (speed <= 0) {
+            return;
+        }
+
         _sinceLastFrame += Raylib.GetFrameTime();
 
-        if (_info!.Frames[_currentFrame].Metadata.GetGifMetadata().FrameDelay / 100f < _sinceLastFrame) {
+        var delay = _info!.Frames[_currentFrame].Metadata.GetGifMetadata().FrameDelay;
+
+        if (speed < 30) {
+            speed = 30;
+        }
+
+        if (delay / speed < _sinceLastFrame) {
             _sinceLastFrame = 0;
             _currentFrame++;
 

@@ -8,13 +8,13 @@
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
         <LangVersion>14</LangVersion>
     </PropertyGroup>
-    
+
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <SelfContained>true</SelfContained>
         <PublishTrimmed>true</PublishTrimmed>
         <PublishSingleFile>true</PublishSingleFile>
     </PropertyGroup>
-    
+
     <ItemGroup>
         <Protobuf Include="..\Dependencies\pokelink-web\v2\assets\proto\*.proto">
             <Link>Proto\%(Filename).proto</Link>
@@ -26,33 +26,48 @@
             <Generator>MSBuild:Compile</Generator>
         </Protobuf>
     </ItemGroup>
-    
+
     <ItemGroup>
-      <PackageReference Include="Google.Protobuf" Version="3.33.1" />
-      <PackageReference Include="Grpc.Tools" Version="2.76.0">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="Handlebars.Net" Version="2.1.6" />
-      <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.0.0">
-        <PrivateAssets>all</PrivateAssets>
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      </PackageReference>
-      <PackageReference Include="NetCoreServer" Version="8.0.7" />
-      <PackageReference Include="Raylib-cs" Version="7.0.1" />
-      <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12" />
+        <PackageReference Include="Google.Protobuf" Version="3.33.1"/>
+        <PackageReference Include="Grpc.Tools" Version="2.76.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Handlebars.Net" Version="2.1.6"/>
+        <PackageReference Include="Microsoft.Net.Compilers.Toolset" Version="5.0.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="NetCoreServer" Version="8.0.7"/>
+        <PackageReference Include="Raylib-cs" Version="7.0.1"/>
+        <PackageReference Include="SixLabors.ImageSharp" Version="3.1.12"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Update="Pokemon Hollow.ttf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Pokemon Solid.ttf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
+        <None Update="Gill Sans.otf">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </None>
     </ItemGroup>
     
     <ItemGroup>
-      <None Update="Pokemon Hollow.ttf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Pokemon Solid.ttf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
-      <None Update="Gill Sans.otf">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+        <EmbeddedResource Include="..\Dependencies\PKHeX\PKHeX.WinForms\Resources\img\Accents\gender_0.png">
+            <Link>Resources\male.png</Link>
+            <LogicalName>Theme.Sprite.Male</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="..\Dependencies\PKHeX\PKHeX.WinForms\Resources\img\Accents\gender_1.png">
+            <Link>Resources\female.png</Link>
+            <LogicalName>Theme.Sprite.Female</LogicalName>
+        </EmbeddedResource>
+        <EmbeddedResource Include="..\Dependencies\PKHeX\PKHeX.WinForms\Resources\img\Accents\gender_2.png">
+            <Link>Resources\genderless.png</Link>
+            <LogicalName>Theme.Sprite.Genderless</LogicalName>
+        </EmbeddedResource>
     </ItemGroup>
 
 </Project>

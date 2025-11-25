@@ -4,6 +4,10 @@ using Raylib_cs;
 namespace NimbusFox.Pokelink.Theme;
 
 internal static class Math {
+    internal static float GetPercentage(float value, float max) {
+        return value / max * 100;
+    }
+    
     internal struct Vector2I(int x = 0, int y = 0) {
         public int X = x;
         public int Y = y;
