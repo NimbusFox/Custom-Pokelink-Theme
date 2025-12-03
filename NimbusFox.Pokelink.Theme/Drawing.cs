@@ -3,39 +3,48 @@ using Raylib_cs;
 
 namespace NimbusFox.Pokelink.Theme;
 
+/// <summary>
+/// Provides helper methods for drawing rounded rectangles with gradient colors using Raylib.
+/// </summary>
 public static class Drawing {
     /// <summary>
-    /// Ported from https://www.raylib.com/examples/shapes/loader.html?name=shapes_rectangle_advanced
+    /// Draws a rectangle with rounded corners and a left‑to‑right gradient.
+    /// The gradient uses the same left and right colors for each side.
     /// </summary>
-    /// <param name="rec"></param>
-    /// <param name="roundnessLeft"></param>
-    /// <param name="roundnessRight"></param>
-    /// <param name="segments"></param>
-    /// <param name="left"></param>
-    /// <param name="right"></param>
+    /// <param name="rec">The rectangle bounds.</param>
+    /// <param name="roundnessLeft">The roundness factor for the left side (0–1).</param>
+    /// <param name="roundnessRight">The roundness factor for the right side (0–1).</param>
+    /// <param name="segments">Number of segments used to approximate the rounded corners.</param>
+    /// <param name="left">The color on the left side of the gradient.</param>
+    /// <param name="right">The color on the right side of the gradient.</param>
     internal static void DrawRectangleRoundedGradient(Rectangle rec, float roundnessLeft, float roundnessRight,
         int segments, Color left, Color right) {
         DrawRectangleRoundedGradient(rec, roundnessLeft, roundnessRight, segments, left, left, right, right);
     }
+    
 
     /// <summary>
-    /// Ported from https://www.raylib.com/examples/shapes/loader.html?name=shapes_rectangle_advanced
+    /// Draws a rectangle with rounded corners and a per‑corner gradient.
+    /// Each corner can have its own color, enabling a 4‑color gradient effect.
     /// </summary>
-    /// <param name="rec"></param>
-    /// <param name="roundnessLeft"></param>
-    /// <param name="roundnessRight"></param>
-    /// <param name="segments"></param>
-    /// <param name="topLeft"></param>
-    /// <param name="bottomLeft"></param>
-    /// <param name="topRight"></param>
-    /// <param name="bottomRight"></param>
+    /// <param name="rec">The rectangle bounds.</param>
+    /// <param name="roundnessLeft">The roundness factor for the left side (0–1).</param>
+    /// <param name="roundnessRight">The roundness factor for the right side (0–1).</param>
+    /// <param name="segments">Number of segments used to approximate the rounded corners.</param>
+    /// <param name="topLeft">Color at the top‑left corner.</param>
+    /// <param name="bottomLeft">Color at the bottom‑left corner.</param>
+    /// <param name="topRight">Color at the top‑right corner.</param>
+    /// <param name="bottomRight">Color at the bottom‑right corner.</param>
     internal static void DrawRectangleRoundedGradient(Rectangle rec, float roundnessLeft, float roundnessRight,
         int segments, Color topLeft, Color bottomLeft, Color topRight, Color bottomRight) {
+        // Early exit for degenerate rectangles or no roundness: just use the
+        // built‑in Raylib gradient function which handles non‑rounded corners.
         if ((roundnessLeft <= 0.0f && roundnessRight <= 0.0f) || rec.Width < 1 || rec.Height < 1) {
             Raylib.DrawRectangleGradientEx(rec, topLeft, bottomLeft, topRight, bottomRight);
             return;
         }
 
+        // Clamp roundness to the valid range [0, 1].
         if (roundnessLeft >= 1.0f) {
             roundnessLeft = 1.0f;
         }
@@ -44,10 +53,13 @@ public static class Drawing {
             roundnessRight = 1.0f;
         }
 
+        // Determine the actual radii based on the smallest side to avoid
+        // overflowing the rectangle.
         var recSize = rec.Width > rec.Height ? rec.Height : rec.Width;
         var radiusLeft = recSize * roundnessLeft / 2;
         var radiusRight = recSize * roundnessRight / 2;
 
+        // Ensure radii are non‑negative.
         if (radiusLeft <= 0.0f) {
             radiusLeft = 0.0f;
         }
@@ -56,12 +68,16 @@ public static class Drawing {
             radiusRight = 0.0f;
         }
 
+        // If both radii are zero, we already handled the non‑rounded case above.
         if (radiusRight <= 0.0f && radiusLeft <= 0.0f) {
             return;
         }
 
         var stepLength = 90.0f / segments;
 
+        // Compute the 12 key points that define the rectangle with rounded
+        // corners. These are used both for positioning vertices and for
+        // calculating the corner centers.
         var points = new Vector2[] {
             // PO, P1, P2
             new(rec.X + radiusLeft, rec.Y), new(rec.X + rec.Width - radiusRight, rec.Y),
@@ -79,9 +95,12 @@ public static class Drawing {
             new(rec.X + radiusLeft, rec.Y + rec.Height - radiusLeft)
         };
 
-        var centers = new Vector2[] { points[8], points[9], points[10], points[11] };
+        // Centers of the four rounded corners for texture mapping.
+        var centers = new[] { points[8], points[9], points[10], points[11] };
 
-        var angles = new float[] { 180.0f, 270.0f, 0.0f, 90.0f };
+        // Angles that correspond to each corner in the order:
+        // top‑left, top‑right, bottom‑right, bottom‑left.
+        var angles = new[] { 180.0f, 270.0f, 0.0f, 90.0f };
 
         var texShapes = Raylib.GetShapesTexture();
         Rlgl.SetTexture(texShapes.Id);
@@ -90,6 +109,8 @@ public static class Drawing {
 
         Rlgl.Begin(DrawMode.Quads);
 
+        // Render each corner individually, assigning the appropriate
+        // gradient color and radius.
         for (var k = 0; k < 4; k++) {
             var color = Color.Blank;
             var radius = 0f;
@@ -116,6 +137,10 @@ public static class Drawing {
             var angle = angles[k];
             var center = centers[k];
 
+            // For each corner, construct a fan of vertices that approximate
+            // the quarter‑circle. We render the fan in two passes:
+            // 1. The textured fan that draws the rounded edge.
+            // 2. The solid fan that covers the corner’s interior.
             for (var i = 0; i < segments / 2; i++) {
                 Rlgl.Color4ub(color.R, color.G, color.B, color.A);
                 Rlgl.TexCoord2f(shapeRect.X / texShapes.Width, shapeRect.Y / texShapes.Height);
@@ -136,6 +161,7 @@ public static class Drawing {
 
                 angle += stepLength * 2;
 
+                // Handle the case where the number of segments is odd.
                 if (segments % 2 != 0) {
                     Rlgl.TexCoord2f(shapeRect.X / texShapes.Width, shapeRect.Y / texShapes.Height);
                     Rlgl.Vertex2f(center.X, center.Y);
@@ -154,7 +180,10 @@ public static class Drawing {
                 }
             }
         }
-
+        // After rendering the four rounded corners, we still need to draw the
+        // flat edges (top, bottom, left, right) that connect the corners.
+        // These are rendered as textured quads using the same texture
+        // coordinates as the rounded corners to keep the gradient seamless.
         Rlgl.Color4ub(topLeft.R, topLeft.G, topLeft.B, topLeft.A);
         Rlgl.TexCoord2f(shapeRect.X / texShapes.Width, shapeRect.Y / texShapes.Height);
         Rlgl.Vertex2f(points[0].X, points[0].Y);
